@@ -20,13 +20,34 @@ interface CalendarFilters {
   bookmarksOnly: boolean;
 }
 
+// Function to get current day in SF timezone
+function getCurrentDayInSF(): string {
+  const now = new Date();
+  // Convert to SF timezone (Pacific Time)
+  const sfTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
+  const currentDate = sfTime.getDate();
+  
+  // Map to conference dates (June 3, 4, 5, 2025 = Tuesday, Wednesday, Thursday)
+  switch (currentDate) {
+    case 3:
+      return 'Tuesday';
+    case 4:
+      return 'Wednesday';
+    case 5:
+      return 'Thursday';
+    default:
+      // If not during conference dates, default to Tuesday
+      return 'Tuesday';
+  }
+}
+
 const initialFilters: CalendarFilters = {
   speakerPosition: [],
   companies: [],
   assignedTrack: [],
   level: [],
   scope: [],
-  day: '',
+  day: getCurrentDayInSF(),
   room: '',
   bookmarksOnly: true,
 };
@@ -223,6 +244,7 @@ export default function CalendarTab() {
               <li>First, bookmark sessions you&apos;re interested in using the <strong>Sessions</strong> tab</li>
               <li>Then use this calendar view to finalize your schedule and check for conflicts</li>
               <li>Use the filtering options below to customize your view</li>
+              <li>Use on desktop, mobile is a bit fragile.</li>
             </ul>
           </div>
         </div>
@@ -249,7 +271,6 @@ export default function CalendarTab() {
                   onChange={(e) => setFilters(prev => ({ ...prev, day: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                 >
-                  <option value="">All Days</option>
                   {filterOptions.days.map(day => (
                     <option key={day} value={day}>{day}</option>
                   ))}

@@ -7,9 +7,6 @@ export function formatSessionDate(startsAt: string, endsAt: string): { day: stri
   const endDay = endDate.getDate();
   
   let day: string;
-  if (startDay !== endDay) {
-    day = 'MULTIDAY';
-  } else {
     switch (startDay) {
       case 3:
         day = 'Tuesday';
@@ -23,7 +20,6 @@ export function formatSessionDate(startsAt: string, endsAt: string): { day: stri
       default:
         day = startDate.toLocaleDateString('en-US', { weekday: 'long' });
     }
-  }
   
   const startTime = startDate.toLocaleTimeString('en-US', { 
     hour: 'numeric', 

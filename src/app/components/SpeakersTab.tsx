@@ -201,12 +201,12 @@ export default function SpeakersTab() {
       }
 
       // Bio search
-      if (filters.bioSearch && !speaker.bio.toLowerCase().includes(filters.bioSearch.toLowerCase())) {
+      if (filters.bioSearch && speaker.bio && !speaker.bio.toLowerCase().includes(filters.bioSearch.toLowerCase())) {
         return false;
       }
 
       // Name search
-      if (filters.nameSearch && !speaker.fullName.toLowerCase().includes(filters.nameSearch.toLowerCase())) {
+      if (filters.nameSearch && speaker.fullName && !speaker.fullName.toLowerCase().includes(filters.nameSearch.toLowerCase())) {
         return false;
       }
 

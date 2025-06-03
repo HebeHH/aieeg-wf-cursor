@@ -20,7 +20,7 @@ const initialFilters: SpeakerFilters = {
 };
 
 export default function SpeakersTab() {
-  const { activeSpeakers, bookmarkAllSpeakers, rejectAllSpeakers } = useConference();
+  const { activeSpeakers, fullData, bookmarkData, bookmarkAllSpeakers, rejectAllSpeakers } = useConference();
   const { openModal } = useModal();
   const [filters, setFilters] = useState<SpeakerFilters>(initialFilters);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
@@ -153,7 +153,15 @@ export default function SpeakersTab() {
 
   // Filter speakers
   const filteredSpeakers = useMemo(() => {
-    return activeSpeakers.filter(speaker => {
+    // If rejected status is selected, use full list instead of active list
+    const speakersToFilter = filters.bookmarkStatus.includes('rejected') 
+      ? (fullData?.speakers || []).map(speaker => ({
+          ...speaker,
+          bookmarked: bookmarkData.speakerBookmarks.includes(speaker.id)
+        }))
+      : activeSpeakers;
+
+    return speakersToFilter.filter(speaker => {
       // Title filter
       if (filters.title.length > 0 && !filters.title.includes(speaker.title)) {
         return false;
@@ -177,10 +185,11 @@ export default function SpeakersTab() {
       // Bookmark status filter
       if (filters.bookmarkStatus.length > 0) {
         const isBookmarked = speaker.bookmarked;
+        const isRejected = bookmarkData.speakerRejections.includes(speaker.id);
         const statusMatches = filters.bookmarkStatus.some(status => {
           if (status === 'bookmarked') return isBookmarked;
-          if (status === 'rejected') return false; // rejected speakers are already filtered out
-          if (status === 'neither') return !isBookmarked;
+          if (status === 'rejected') return isRejected;
+          if (status === 'neither') return !isBookmarked && !isRejected;
           return false;
         });
         if (!statusMatches) return false;
@@ -203,7 +212,7 @@ export default function SpeakersTab() {
 
       return true;
     });
-  }, [activeSpeakers, filters]);
+  }, [activeSpeakers, filters, fullData, bookmarkData]);
 
   const clearFilters = () => {
     setFilters(initialFilters);
@@ -322,7 +331,7 @@ export default function SpeakersTab() {
                     </label>
                     <MultiSelect
                       label="Bookmark Status"
-                      options={['bookmarked', 'neither'] as BookmarkStatus[]}
+                      options={['bookmarked', 'rejected', 'neither'] as BookmarkStatus[]}
                       value={filters.bookmarkStatus}
                       onChange={(value) => setFilters(prev => ({ ...prev, bookmarkStatus: value as BookmarkStatus[] }))}
                       placeholder="All statuses"

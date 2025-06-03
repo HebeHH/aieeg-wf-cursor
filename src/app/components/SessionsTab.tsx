@@ -25,7 +25,7 @@ const initialFilters: SessionFilters = {
 };
 
 export default function SessionsTab() {
-  const { activeSessions, bookmarkAllSessions, rejectAllSessions } = useConference();
+  const { activeSessions, fullData, bookmarkData, bookmarkAllSessions, rejectAllSessions } = useConference();
   const { openModal } = useModal();
   const [filters, setFilters] = useState<SessionFilters>(initialFilters);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
@@ -163,7 +163,31 @@ export default function SessionsTab() {
 
   // Filter sessions
   const filteredSessions = useMemo(() => {
-    return activeSessions.filter(session => {
+    // If rejected status is selected, use full list instead of active list
+    const sessionsToFilter = filters.bookmarkStatus.includes('rejected')
+      ? (fullData?.sessions || []).map(session => {
+          const sessionSpeakers = session.speakers.map(speakerId => 
+            fullData?.speakers.find(s => s.id === speakerId)
+          ).filter(Boolean);
+          
+          const speakerPositions: Position[] = sessionSpeakers.flatMap(speaker => 
+            speaker?.position || []
+          );
+          
+          const speakerBookmarked = sessionSpeakers.some(speaker => 
+            speaker && bookmarkData.speakerBookmarks.includes(speaker.id)
+          );
+
+          return {
+            ...session,
+            bookmarked: bookmarkData.sessionBookmarks.includes(session.id),
+            speakerBookmarked,
+            speakerPositions
+          };
+        })
+      : activeSessions;
+
+    return sessionsToFilter.filter(session => {
       // Speaker position filter
       if (filters.speakerPosition.length > 0 && 
           !filters.speakerPosition.some(p => session.speakerPositions.includes(p))) {
@@ -182,10 +206,11 @@ export default function SessionsTab() {
       if (filters.bookmarkStatus.length > 0) {
         const isBookmarked = session.bookmarked;
         const isSpeakerBookmarked = session.speakerBookmarked;
+        const isRejected = bookmarkData.sessionRejections.includes(session.id);
         const statusMatches = filters.bookmarkStatus.some(status => {
           if (status === 'bookmarked') return isBookmarked || isSpeakerBookmarked;
-          if (status === 'rejected') return false; // rejected sessions are already filtered out
-          if (status === 'neither') return !isBookmarked && !isSpeakerBookmarked;
+          if (status === 'rejected') return isRejected;
+          if (status === 'neither') return !isBookmarked && !isSpeakerBookmarked && !isRejected;
           return false;
         });
         if (!statusMatches) return false;
@@ -244,7 +269,7 @@ export default function SessionsTab() {
 
       return true;
     });
-  }, [activeSessions, filters]);
+  }, [activeSessions, filters, fullData, bookmarkData]);
 
   const clearFilters = () => {
     setFilters(initialFilters);
@@ -422,7 +447,7 @@ export default function SessionsTab() {
 
                     <MultiSelect
                       label="Bookmark Status"
-                      options={['bookmarked', 'neither'] as BookmarkStatus[]}
+                      options={['bookmarked', 'rejected', 'neither'] as BookmarkStatus[]}
                       value={filters.bookmarkStatus}
                       onChange={(value) => setFilters(prev => ({ ...prev, bookmarkStatus: value as BookmarkStatus[] }))}
                       placeholder="All statuses"

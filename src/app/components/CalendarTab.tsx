@@ -106,28 +106,24 @@ export default function CalendarTab() {
     return sessions;
   }, [activeSessions, filters, hiddenSessions]);
 
-  // Define time slots for the calendar
-  const timeSlots = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+  // Adjust timeSlots to start from the earliest event time
+  const timeSlots = useMemo(() => {
+    const startHour = Math.min(...filteredSessions.map(s => new Date(s.startsAt).getHours()));
+    const endHour = Math.max(...filteredSessions.map(s => new Date(s.endsAt).getHours()));
+    return Array.from({ length: endHour - startHour + 1 }, (_, i) => `${startHour + i}:00`);
+  }, [filteredSessions]);
 
-  // Update calendarEvents to group by time and stretch events
+  // Update calendarEvents to group by time and stretch events vertically
   const calendarEvents = useMemo(() => {
     const events = filteredSessions.slice(0, MAX_EVENTS);
-    const timeSlots: { [key: string]: typeof events } = {};
-
-    events.forEach(session => {
+    return events.map(session => {
       const startHour = new Date(session.startsAt).getHours();
       const endHour = new Date(session.endsAt).getHours();
-      for (let hour = startHour; hour <= endHour; hour++) {
-        const time = `${hour}:00`;
-        if (!timeSlots[time]) timeSlots[time] = [];
-        timeSlots[time].push(session);
-      }
-    });
-
-    return Object.entries(timeSlots).sort(([timeA], [timeB]) => {
-      const [hourA] = timeA.split(':');
-      const [hourB] = timeB.split(':');
-      return parseInt(hourA) - parseInt(hourB);
+      return {
+        ...session,
+        top: `${(startHour - startHour) * 100}%`,
+        height: `${(endHour - startHour) * 100}%`
+      };
     });
   }, [filteredSessions]);
 
@@ -317,23 +313,27 @@ export default function CalendarTab() {
         </div>
 
         {/* Events */}
-        <div className="flex-1">
-          {calendarEvents.map(([time, sessions]) => (
-            <div key={time} className="relative h-16 border-b border-gray-200">
-              {sessions.map(session => (
-                <div
-                  key={session.id}
-                  className="absolute bg-white border rounded-lg p-2 shadow-md"
-                  style={{
-                    top: 0,
-                    left: `${(new Date(session.startsAt).getMinutes() / 60) * 100}%`,
-                    width: `${((new Date(session.endsAt).getTime() - new Date(session.startsAt).getTime()) / (60 * 60 * 1000)) * 100}%`,
-                  }}
-                >
-                  <h3 className="text-sm font-medium text-gray-800">{session.title}</h3>
-                  <p className="text-xs text-gray-600">{session.Room}</p>
-                </div>
-              ))}
+        <div className="flex-1 relative">
+          {calendarEvents.map(session => (
+            <div
+              key={session.id}
+              className="absolute bg-white border rounded-lg p-2 shadow-md"
+              style={{
+                top: session.top,
+                height: session.height,
+                left: `${(new Date(session.startsAt).getMinutes() / 60) * 100}%`,
+                width: `${((new Date(session.endsAt).getTime() - new Date(session.startsAt).getTime()) / (60 * 60 * 1000)) * 100}%`,
+              }}
+              onClick={() => openModal('session', session.id)}
+            >
+              <h3 className="text-sm font-medium text-gray-800">{session.title}</h3>
+              <p className="text-xs text-gray-600">{session.Room}</p>
+              <div className="flex gap-1 mt-2">
+                <button className="p-1 text-xs rounded bg-purple-100 text-purple-700 hover:bg-purple-200">★</button>
+                <button className="p-1 text-xs rounded bg-red-100 text-red-700 hover:bg-red-200">✕</button>
+                <button className="p-1 text-xs rounded bg-green-100 text-green-700 hover:bg-green-200">📅</button>
+                <button className="p-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200">👁️</button>
+              </div>
             </div>
           ))}
         </div>

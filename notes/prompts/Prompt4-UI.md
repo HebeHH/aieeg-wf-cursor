@@ -2,7 +2,6 @@
 
 ## Mobile
 * Make it look better on mobile
-* In particular, tapping on a session or speaker object doesn't look good on mobile - half off the page
 
 
 ## Calendar

@@ -206,6 +206,28 @@ export default function CalendarTab() {
 
   return (
     <div className="space-y-6">
+      {/* Development Warning Banner */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <span className="text-yellow-600 text-lg">⚠️</span>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-yellow-800">
+              Calendar View - Under Development
+            </h3>
+            <p className="mt-1 text-sm text-yellow-700">
+              This calendar view is still being refined. For the best experience, we recommend:
+            </p>
+            <ul className="mt-2 text-sm text-yellow-700 list-disc list-inside space-y-1">
+              <li>First, bookmark sessions you're interested in using the <strong>Sessions</strong> tab</li>
+              <li>Then use this calendar view to finalize your schedule and check for conflicts</li>
+              <li>Use the filtering options below to customize your view</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       {/* Filters Section */}
       <div className="sticky top-20 z-20 bg-white border border-gray-200 rounded-lg shadow-sm">
         <div 

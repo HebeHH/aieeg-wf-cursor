@@ -89,7 +89,7 @@ We will have 2 tabs along the top, Speakers, Sessions and You. we might add more
 We want a good looking UI, but also to communicate a lot of data quickly - so please don't use too much whitespace. I know you really really want to use a lot of whitespace, but please be reasonable. Use `-sm` for paragraph fonts, for instance.
 
 
-use purple for the colors. pick some nice google fonts.
+use purple for the colors. pick some nice google fonts. Style it well. purple, grey, tags should be nicely rounded spans, all that jazz. 
 
 Use components. We'll be wanting to use the same elements across different pages - eg, pull up the speaker detail card from the sessions tab - so it's important that these are reusable.
 

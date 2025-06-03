@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { FullData, EnhancedSpeaker, CombinedSession, Position } from '../types/conference';
+import { FullData,  Position } from '../types/conference';
 import { EnhancedSpeakerWithBookmarks, EnhancedSessionWithBookmarks } from '../types/ui';
 import { BookmarkData, getBookmarkData, saveBookmarkData } from '../utils/localStorage';
 import { loadConferenceData } from '../utils/dataLoader';

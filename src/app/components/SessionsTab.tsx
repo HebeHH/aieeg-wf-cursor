@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useConference } from '../contexts/ConferenceContext';
+import { useModal } from '../contexts/ModalContext';
 import { SessionFilters, BookmarkStatus } from '../types/ui';
 import { formatSessionDate, isTimeInRange } from '../utils/dateUtils';
 import { Position } from '../types/conference';
 import SessionCard from './SessionCard';
-import SessionModal from './SessionModal';
+import MultiSelect from './MultiSelect';
 
 const initialFilters: SessionFilters = {
   speakerPosition: [],
@@ -25,8 +26,119 @@ const initialFilters: SessionFilters = {
 
 export default function SessionsTab() {
   const { activeSessions, bookmarkAllSessions, rejectAllSessions } = useConference();
+  const { openModal } = useModal();
   const [filters, setFilters] = useState<SessionFilters>(initialFilters);
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [filtersExpanded, setFiltersExpanded] = useState(true);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+  const lastCollapseByScroll = useRef(false);
+  const isScrolling = useRef(false);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  const expandedAt = useRef<number>(0);
+  const lastScrollTime = useRef<number>(0);
+
+  // Collapse on scroll down, but only on actual scroll events
+  useEffect(() => {
+    const handleScroll = () => {
+      const now = Date.now();
+      
+      // If we're within 3 seconds of expanding, ignore scroll events
+      if (now - expandedAt.current < 3000) {
+        console.log('Ignoring scroll event during grace period');
+        return;
+      }
+
+      console.log('Scroll event fired', {
+        currentScrollY: window.scrollY,
+        lastScrollY: lastScrollY.current,
+        filtersExpanded,
+        isScrolling: isScrolling.current,
+        lastCollapseByScroll: lastCollapseByScroll.current
+      });
+
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          // Set scrolling state
+          isScrolling.current = true;
+          
+          // Clear any existing scroll timeout
+          if (scrollTimeout.current) {
+            clearTimeout(scrollTimeout.current);
+          }
+          
+          // Set a new scroll timeout
+          scrollTimeout.current = setTimeout(() => {
+            console.log('Scroll ended');
+            isScrolling.current = false;
+          }, 150); // Adjust timeout as needed
+
+          // Calculate scroll velocity (pixels per millisecond)
+          const timeDelta = now - lastScrollTime.current;
+          const scrollDelta = window.scrollY - lastScrollY.current;
+          const scrollVelocity = Math.abs(scrollDelta / timeDelta);
+
+          // Only collapse if scrolling down significantly (adjust these values as needed)
+          const MINIMUM_SCROLL_DELTA = 50; // pixels
+          const MINIMUM_SCROLL_VELOCITY = 0.5; // pixels per millisecond
+
+          console.log('Scroll metrics', {
+            scrollDelta,
+            timeDelta,
+            scrollVelocity,
+            threshold: MINIMUM_SCROLL_VELOCITY
+          });
+
+          if (window.scrollY > lastScrollY.current && 
+              filtersExpanded && 
+              Math.abs(scrollDelta) > MINIMUM_SCROLL_DELTA &&
+              scrollVelocity > MINIMUM_SCROLL_VELOCITY) {
+            console.log('Collapsing due to scroll down');
+            setFiltersExpanded(false);
+            lastCollapseByScroll.current = true;
+          }
+
+          lastScrollY.current = window.scrollY;
+          lastScrollTime.current = now;
+          ticking.current = false;
+        });
+        ticking.current = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+    };
+  }, [filtersExpanded]);
+
+  // When user manually expands, reset scroll-collapse flag
+  const handleToggleFilters = () => {
+    console.log('Toggle clicked', {
+      currentState: filtersExpanded,
+      isScrolling: isScrolling.current,
+      lastCollapseByScroll: lastCollapseByScroll.current,
+      scrollY: window.scrollY
+    });
+
+    // If we're actively scrolling, don't allow expand
+    if (!filtersExpanded && isScrolling.current) {
+      console.log('Ignoring expand during scroll');
+      return;
+    }
+
+    setFiltersExpanded((prev) => {
+      const newState = !prev;
+      console.log('Setting expanded state to:', newState);
+      if (!prev) {
+        lastCollapseByScroll.current = false;
+        expandedAt.current = Date.now();
+      }
+      return newState;
+    });
+  };
 
   // Get unique values for multiselect filters
   const filterOptions = useMemo(() => {
@@ -150,231 +262,224 @@ export default function SessionsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="space-y-4">
-          {/* Search Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company Search</label>
-              <input
-                type="text"
-                value={filters.companySearch}
-                onChange={(e) => setFilters(prev => ({ ...prev, companySearch: e.target.value }))}
-                placeholder="Search companies..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title/Description Search</label>
-              <input
-                type="text"
-                value={filters.titleDescriptionSearch}
-                onChange={(e) => setFilters(prev => ({ ...prev, titleDescriptionSearch: e.target.value }))}
-                placeholder="Search titles and descriptions..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
-          </div>
-
-          {/* Time Filter */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">From Time</label>
-              <input
-                type="time"
-                value={filters.timeFrom}
-                onChange={(e) => setFilters(prev => ({ ...prev, timeFrom: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">To Time</label>
-              <input
-                type="time"
-                value={filters.timeTo}
-                onChange={(e) => setFilters(prev => ({ ...prev, timeTo: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
-          </div>
-
-          {/* Multiselect Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Speaker Position</label>
-              <select
-                multiple
-                value={filters.speakerPosition}
-                onChange={(e) => setFilters(prev => ({ ...prev, speakerPosition: Array.from(e.target.selectedOptions, option => option.value) as Position[] }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                size={3}
-              >
-                {filterOptions.speakerPositions.map(position => (
-                  <option key={position} value={position}>{position}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Companies</label>
-              <select
-                multiple
-                value={filters.companies}
-                onChange={(e) => setFilters(prev => ({ ...prev, companies: Array.from(e.target.selectedOptions, option => option.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                size={3}
-              >
-                {filterOptions.companies.map(company => (
-                  <option key={company} value={company}>{company}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Track</label>
-              <select
-                multiple
-                value={filters.assignedTrack}
-                onChange={(e) => setFilters(prev => ({ ...prev, assignedTrack: Array.from(e.target.selectedOptions, option => option.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                size={3}
-              >
-                {filterOptions.assignedTracks.map(track => (
-                  <option key={track} value={track}>{track}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Day</label>
-              <select
-                multiple
-                value={filters.day}
-                onChange={(e) => setFilters(prev => ({ ...prev, day: Array.from(e.target.selectedOptions, option => option.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                size={3}
-              >
-                <option value="Tuesday">Tuesday</option>
-                <option value="Wednesday">Wednesday</option>
-                <option value="Thursday">Thursday</option>
-                <option value="MULTIDAY">Multiday</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
-              <select
-                multiple
-                value={filters.level}
-                onChange={(e) => setFilters(prev => ({ ...prev, level: Array.from(e.target.selectedOptions, option => option.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                size={3}
-              >
-                {filterOptions.levels.map(level => (
-                  <option key={level} value={level}>{level}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Scope</label>
-              <select
-                multiple
-                value={filters.scope}
-                onChange={(e) => setFilters(prev => ({ ...prev, scope: Array.from(e.target.selectedOptions, option => option.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                size={3}
-              >
-                {filterOptions.scopes.map(scope => (
-                  <option key={scope} value={scope}>{scope}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
-              <select
-                multiple
-                value={filters.room}
-                onChange={(e) => setFilters(prev => ({ ...prev, room: Array.from(e.target.selectedOptions, option => option.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                size={3}
-              >
-                {filterOptions.rooms.map(room => (
-                  <option key={room} value={room}>{room}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Status Filter */}
-          <div className="flex flex-wrap gap-4 items-center">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                multiple
-                value={filters.bookmarkStatus}
-                onChange={(e) => setFilters(prev => ({ ...prev, bookmarkStatus: Array.from(e.target.selectedOptions, option => option.value) as BookmarkStatus[] }))}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                size={3}
-              >
-                <option value="bookmarked">Bookmarked</option>
-                <option value="rejected">Rejected</option>
-                <option value="neither">Neither</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+      {/* Sticky Expandable Filters */}
+      <div className="sticky top-0 z-20">
+        <div 
+          className={`transition-all duration-300 ${
+            filtersExpanded ? 'shadow-sm bg-white border border-gray-200 rounded-b-lg' : 'bg-white border-b border-gray-200'
+          }`}
+          style={{ 
+            borderTopLeftRadius: filtersExpanded ? '0.5rem' : 0, 
+            borderTopRightRadius: filtersExpanded ? '0.5rem' : 0 
+          }}
+        >
+          <div 
+            className="flex items-center justify-between px-6 py-3 cursor-pointer select-none" 
+            onClick={handleToggleFilters}
+            onTransitionEnd={() => console.log('Transition ended', { filtersExpanded })}
+          >
+            <span className="text-lg font-medium text-gray-900">Filters</span>
+            <span 
+              className={`transform transition-transform ${filtersExpanded ? '' : 'rotate-180'}`}
             >
-              Clear Filters
-            </button>
-            <button
-              onClick={handleBookmarkAll}
-              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            >
-              Bookmark All ({filteredSessions.length})
-            </button>
-            <button
-              onClick={handleRejectAll}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              Reject All ({filteredSessions.length})
-            </button>
+              <svg 
+                width="24" 
+                height="24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                viewBox="0 0 24 24" 
+                className="w-6 h-6 text-gray-500"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
           </div>
+          {filtersExpanded && (
+            <div className="p-6 pt-0 space-y-6">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-gray-900">Filter Sessions</h3>
+                  <button
+                    onClick={clearFilters}
+                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+
+                {/* Search Filters */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Search</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Company Search</label>
+                      <input
+                        type="text"
+                        value={filters.companySearch}
+                        onChange={(e) => setFilters(prev => ({ ...prev, companySearch: e.target.value }))}
+                        placeholder="Search companies..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Title/Description Search</label>
+                      <input
+                        type="text"
+                        value={filters.titleDescriptionSearch}
+                        onChange={(e) => setFilters(prev => ({ ...prev, titleDescriptionSearch: e.target.value }))}
+                        placeholder="Search titles and descriptions..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Time Filter */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Time Range</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">From Time</label>
+                      <input
+                        type="time"
+                        value={filters.timeFrom}
+                        onChange={(e) => setFilters(prev => ({ ...prev, timeFrom: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-purple-500 focus:border-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">To Time</label>
+                      <input
+                        type="time"
+                        value={filters.timeTo}
+                        onChange={(e) => setFilters(prev => ({ ...prev, timeTo: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-purple-500 focus:border-purple-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Multiselect Filters */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Categories</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <MultiSelect
+                      label="Speaker Position"
+                      options={filterOptions.speakerPositions}
+                      value={filters.speakerPosition}
+                      onChange={(value) => setFilters(prev => ({ ...prev, speakerPosition: value as Position[] }))}
+                      placeholder="Choose positions..."
+                    />
+
+                    <MultiSelect
+                      label="Company"
+                      options={filterOptions.companies}
+                      value={filters.companies}
+                      onChange={(value) => setFilters(prev => ({ ...prev, companies: value }))}
+                      placeholder="Choose companies..."
+                    />
+
+                    <MultiSelect
+                      label="Track"
+                      options={filterOptions.assignedTracks}
+                      value={filters.assignedTrack}
+                      onChange={(value) => setFilters(prev => ({ ...prev, assignedTrack: value }))}
+                      placeholder="Choose tracks..."
+                    />
+
+                    <MultiSelect
+                      label="Day"
+                      options={['Tuesday', 'Wednesday', 'Thursday']}
+                      value={filters.day}
+                      onChange={(value) => setFilters(prev => ({ ...prev, day: value }))}
+                      placeholder="Choose days..."
+                    />
+
+                    <MultiSelect
+                      label="Level"
+                      options={filterOptions.levels}
+                      value={filters.level}
+                      onChange={(value) => setFilters(prev => ({ ...prev, level: value }))}
+                      placeholder="Choose levels..."
+                    />
+
+                    <MultiSelect
+                      label="Scope"
+                      options={filterOptions.scopes}
+                      value={filters.scope}
+                      onChange={(value) => setFilters(prev => ({ ...prev, scope: value }))}
+                      placeholder="Choose scopes..."
+                    />
+
+                    <MultiSelect
+                      label="Room"
+                      options={filterOptions.rooms}
+                      value={filters.room}
+                      onChange={(value) => setFilters(prev => ({ ...prev, room: value }))}
+                      placeholder="Choose rooms..."
+                    />
+
+                    <MultiSelect
+                      label="Bookmark Status"
+                      options={['bookmarked', 'neither'] as BookmarkStatus[]}
+                      value={filters.bookmarkStatus}
+                      onChange={(value) => setFilters(prev => ({ ...prev, bookmarkStatus: value as BookmarkStatus[] }))}
+                      placeholder="All statuses"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="text-sm text-gray-600">
-        Showing {filteredSessions.length} of {activeSessions.length} sessions
-      </div>
+      {/* Results */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-gray-900">
+              Sessions ({filteredSessions.length})
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBookmarkAll}
+                className="px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+              >
+                Bookmark All ({filteredSessions.length})
+              </button>
+              <button
+                onClick={handleRejectAll}
+                className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+              >
+                Reject All ({filteredSessions.length})
+              </button>
+            </div>
+          </div>
+        </div>
 
-      {/* Session Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredSessions.map(session => (
-          <SessionCard
-            key={session.id}
-            session={session}
-            onClick={() => setSelectedSession(session.id)}
-          />
-        ))}
-      </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredSessions.map(session => (
+              <SessionCard
+                key={session.id}
+                session={session}
+                onClick={() => openModal('session', session.id)}
+              />
+            ))}
+          </div>
 
-      {/* Session Modal */}
-      {selectedSession && (
-        <SessionModal
-          sessionId={selectedSession}
-          onClose={() => setSelectedSession(null)}
-        />
-      )}
+          {filteredSessions.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-gray-400 text-lg mb-2">No sessions found</div>
+              <div className="text-gray-500 text-sm">
+                Try adjusting your filters to see more results
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 } 

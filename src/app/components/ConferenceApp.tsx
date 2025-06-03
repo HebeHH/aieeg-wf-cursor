@@ -41,55 +41,74 @@ export default function ConferenceApp() {
     <ModalProvider>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <h1 className="text-2xl font-bold text-gray-900">Conference Explorer</h1>
-              
-              {/* Tab Navigation */}
-              <nav className="flex space-x-4 md:space-x-8">
-                <button
-                  onClick={() => setActiveTab('speakers')}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    activeTab === 'speakers'
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Speakers
-                </button>
-                <button
-                  onClick={() => setActiveTab('sessions')}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    activeTab === 'sessions'
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Sessions
-                </button>
-                <button
-                  onClick={() => setActiveTab('calendar')}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    activeTab === 'calendar'
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Calendar
-                </button>
-                <button
-                  onClick={() => setActiveTab('you')}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    activeTab === 'you'
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  You
-                </button>
-              </nav>
+        <header className="bg-violet-500 border-b border-rose-200 sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 md:h-20">
+            <div className="flex items-center space-x-4">
+              <a href="https://www.shebecoding.com/" target="_blank" className="text-xl md:text-3xl font-bold text-rose-50">
+                <span className="block md:inline">s<span className="font-bold text-rose-200">hebe</span>coding</span>
+                <span className="hidden md:inline">: AI WF Explorer</span>
+              </a>
+              <div className="flex space-x-2">
+                <a href="https://github.com/hebehh" target="_blank">
+                  <img src="/layout/github.svg" alt="Github" className="w-5 h-5 md:w-6 md:h-6" />
+                </a>
+                <a href="https://x.com/hebehilhorst" target="_blank">
+                  <img src="/layout/twitter.svg" alt="Twitter" className="w-5 h-5 md:w-6 md:h-6" />
+                </a>
+                <a href="https://www.linkedin.com/in/hebehilhorst/" target="_blank">
+                  <img src="/layout/linkedin.svg" alt="LinkedIn" className="w-5 h-5 md:w-6 md:h-6" />
+                </a>
+              </div>
             </div>
+            <div className="md:hidden">
+              <button className="text-rose-50 focus:outline-none">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+              </button>
+            </div>
+            <nav className="hidden md:flex space-x-4 md:space-x-8 justify-center">
+              <button
+                onClick={() => setActiveTab('speakers')}
+                className={`px-4 py-2 text-md font-medium rounded-lg shadow-md transition-colors ${
+                  activeTab === 'speakers'
+                    ? 'bg-rose-200 text-violet-900'
+                    : 'text-rose-100 hover:text-rose-200 hover:bg-violet-600'
+                }`}
+              >
+                Speakers
+              </button>
+              <button
+                onClick={() => setActiveTab('sessions')}
+                className={`px-4 py-2 text-md font-medium rounded-lg shadow-md transition-colors ${
+                  activeTab === 'sessions'
+                    ? 'bg-rose-200 text-violet-900'
+                    : 'text-rose-100 hover:text-rose-200 hover:bg-violet-600'
+                }`}
+              >
+                Sessions
+              </button>
+              <button
+                onClick={() => setActiveTab('calendar')}
+                className={`px-4 py-2 text-md font-medium rounded-lg shadow-md transition-colors ${
+                  activeTab === 'calendar'
+                    ? 'bg-rose-200 text-violet-900'
+                    : 'text-rose-100 hover:text-rose-200 hover:bg-violet-600'
+                }`}
+              >
+                Calendar
+              </button>
+              <button
+                onClick={() => setActiveTab('you')}
+                className={`px-4 py-2 text-md font-medium rounded-lg shadow-md transition-colors ${
+                  activeTab === 'you'
+                    ? 'bg-rose-200 text-violet-900'
+                    : 'text-rose-100 hover:text-rose-200 hover:bg-violet-600'
+                }`}
+              >
+                You
+              </button>
+            </nav>
           </div>
         </header>
 

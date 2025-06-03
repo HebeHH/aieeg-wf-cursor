@@ -146,7 +146,7 @@ export default function CalendarTab() {
   return (
     <div className="space-y-6">
       {/* Filters Section */}
-      <div className="sticky top-0 z-20 bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div className="sticky top-20 z-20 bg-white border border-gray-200 rounded-lg shadow-sm">
         <div 
           className={`flex items-center justify-between px-6 py-3 cursor-pointer ${textColor}`}
           onClick={() => setFiltersExpanded(!filtersExpanded)}

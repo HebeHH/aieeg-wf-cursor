@@ -220,7 +220,7 @@ export default function CalendarTab() {
               This calendar view is still being refined. For the best experience, we recommend:
             </p>
             <ul className="mt-2 text-sm text-yellow-700 list-disc list-inside space-y-1">
-              <li>First, bookmark sessions you're interested in using the <strong>Sessions</strong> tab</li>
+              <li>First, bookmark sessions you&apos;re interested in using the <strong>Sessions</strong> tab</li>
               <li>Then use this calendar view to finalize your schedule and check for conflicts</li>
               <li>Use the filtering options below to customize your view</li>
             </ul>

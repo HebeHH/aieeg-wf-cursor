@@ -21,6 +21,7 @@ interface ConferenceContextType {
   rejectAllSpeakers: (speakerIds: string[]) => void;
   bookmarkAllSessions: (sessionIds: string[]) => void;
   rejectAllSessions: (sessionIds: string[]) => void;
+  importBookmarks: (importedData: BookmarkData) => void;
 }
 
 const ConferenceContext = createContext<ConferenceContextType | undefined>(undefined);
@@ -190,6 +191,16 @@ export function ConferenceProvider({ children }: { children: ReactNode }) {
     updateBookmarkData(newData);
   };
 
+  const importBookmarks = (importedData: BookmarkData) => {
+    const mergedData = {
+      speakerBookmarks: [...new Set([...bookmarkData.speakerBookmarks, ...importedData.speakerBookmarks])],
+      sessionBookmarks: [...new Set([...bookmarkData.sessionBookmarks, ...importedData.sessionBookmarks])],
+      speakerRejections: [...new Set([...bookmarkData.speakerRejections, ...importedData.speakerRejections])],
+      sessionRejections: [...new Set([...bookmarkData.sessionRejections, ...importedData.sessionRejections])]
+    };
+    updateBookmarkData(mergedData);
+  };
+
   return (
     <ConferenceContext.Provider
       value={{
@@ -206,7 +217,8 @@ export function ConferenceProvider({ children }: { children: ReactNode }) {
         bookmarkAllSpeakers,
         rejectAllSpeakers,
         bookmarkAllSessions,
-        rejectAllSessions
+        rejectAllSessions,
+        importBookmarks
       }}
     >
       {children}

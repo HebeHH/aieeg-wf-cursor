@@ -19,12 +19,12 @@ export default function CalendarEventCard({ session, onClick, onHide }: Calendar
   const sessionCompany = fullData ? getSessionCompany(session, fullData) : 'Unknown';
 
   // Determine what content to show based on size - be more intelligent about space usage
-  const hasGoodHeight = !session.height || session.height >= 60; // Enough height for multiple lines
-  const hasGoodWidth = !session.width || session.width >= 160; // Reduced from 180 for mobile
-  const hasExcellentHeight = !session.height || session.height >= 90; // Plenty of height for all content
-  const hasExcellentWidth = !session.width || session.width >= 200; // Reduced from 220 for mobile
+  const hasGoodHeight = !session.height || session.height >= 40; // Lowered from 60 to 40
+  const hasGoodWidth = !session.width || session.width >= 120; // Lowered from 160 to 120
+  const hasExcellentHeight = !session.height || session.height >= 70; // Lowered from 90 to 70
+  const hasExcellentWidth = !session.width || session.width >= 140; // Lowered from 200 to 140
   
-  // Show content based on available space
+  // Show content based on available space - be more generous with showing content
   const showAllContent = hasExcellentHeight && hasExcellentWidth;
   const showBasicContent = hasGoodHeight && hasGoodWidth;
   const showOnlyTitle = !hasGoodHeight || !hasGoodWidth;
@@ -68,7 +68,11 @@ export default function CalendarEventCard({ session, onClick, onHide }: Calendar
     >
       {/* Header with title and buttons */}
       <div className="flex items-start justify-between mb-1">
-        <h3 className="font-medium text-xs leading-tight flex-1 pr-1 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: showOnlyTitle ? 1 : 2, WebkitBoxOrient: 'vertical' }}>
+        <h3 className="font-medium text-xs leading-tight flex-1 pr-1 overflow-hidden" style={{ 
+          display: '-webkit-box', 
+          WebkitLineClamp: showOnlyTitle ? 1 : (hasExcellentHeight ? 3 : 2), // More lines for taller cards
+          WebkitBoxOrient: 'vertical' 
+        }}>
           {session.title}
         </h3>
         <div className="flex gap-0.5 flex-shrink-0">
@@ -110,21 +114,21 @@ export default function CalendarEventCard({ session, onClick, onHide }: Calendar
       {/* Content - show based on actual available space */}
       {!showOnlyTitle && (
         <div className="space-y-0.5 text-xs flex-1 overflow-hidden">
-          {/* Show room if we have decent width */}
+          {/* Show room if we have any decent space */}
           {hasGoodWidth && (
             <div className="flex items-center gap-1">
               <span className="bg-gray-100 px-1 py-0.5 rounded text-xs truncate">{session.Room}</span>
             </div>
           )}
           
-          {/* Show company if we have excellent space or at least good height with some width */}
-          {(showAllContent || (hasExcellentHeight && hasGoodWidth)) && (
+          {/* Show company more liberally - if we have basic content space */}
+          {showBasicContent && (
             <div className="text-gray-600 truncate">
               <span className="font-medium">Company:</span> {sessionCompany}
             </div>
           )}
           
-          {/* Show track if we have good space */}
+          {/* Show track if we have basic space */}
           {session["Assigned Track"] && showBasicContent && (
             <div>
               <span className={`inline-block px-1 py-0.5 rounded text-xs truncate ${getTrackColor(session["Assigned Track"])}`}>

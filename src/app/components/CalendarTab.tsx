@@ -412,10 +412,10 @@ export default function CalendarTab() {
       {/* Calendar View */}
       <div className="flex">
         {/* Timeline */}
-        <div className="w-20 flex-shrink-0 relative z-20 bg-white">
+        <div className="w-12 md:w-20 flex-shrink-0 relative z-0 bg-white">
           {timeSlots.map(time => (
-            <div key={time} className="h-[120px] border-b border-gray-200 text-sm text-gray-500 p-2 flex items-start">
-              {time}
+            <div key={time} className="h-[120px] border-b border-gray-200 text-sm text-gray-500 p-1 md:p-2 flex items-start">
+              <span className="text-xs md:text-sm">{time}</span>
             </div>
           ))}
         </div>
@@ -424,7 +424,7 @@ export default function CalendarTab() {
         <div className="flex-1 relative overflow-hidden">
           {/* Fixed Hour Grid Lines */}
           <div 
-            className="absolute inset-0 border-l border-gray-200 pointer-events-none z-10"
+            className="absolute inset-0 border-l border-gray-200 pointer-events-none z-0"
             style={{ minHeight: `${timeSlots.length * 120}px` }}
           >
             {timeSlots.map((_, index) => (
@@ -438,7 +438,7 @@ export default function CalendarTab() {
 
           {/* Scrollable Events Container */}
           <div 
-            className="absolute inset-0 overflow-x-auto overflow-y-hidden z-20"
+            className="absolute inset-0 overflow-x-auto overflow-y-hidden z-1"
             style={{ minHeight: `${timeSlots.length * 120}px` }}
           >
             <div 
@@ -459,7 +459,7 @@ export default function CalendarTab() {
                     height: `${session.height}px`,
                     left: `${8 + session.leftOffset}px`, // 8px base margin + dynamic offset
                     width: `${session.width}px`,
-                    zIndex: 10
+                    zIndex: 1
                   }}
                 >
                   <CalendarEventCard

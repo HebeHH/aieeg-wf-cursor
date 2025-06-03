@@ -231,7 +231,7 @@ export default function SpeakersTab() {
   return (
     <div className="space-y-6">
       {/* Sticky Expandable Filters */}
-      <div className="sticky top-20 z-20">
+      <div className="relative md:sticky md:top-20 z-20">
         <div className={`transition-all duration-300 ${filtersExpanded ? 'shadow-sm bg-white border border-gray-200 rounded-b-lg' : 'bg-white border-b border-gray-200'}`}
              style={{ borderTopLeftRadius: filtersExpanded ? '0.5rem' : 0, borderTopRightRadius: filtersExpanded ? '0.5rem' : 0 }}>
           <div className="flex items-center justify-between px-6 py-3 cursor-pointer select-none" onClick={handleToggleFilters}

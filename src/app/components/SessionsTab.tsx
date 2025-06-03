@@ -288,7 +288,7 @@ export default function SessionsTab() {
   return (
     <div className="space-y-6">
       {/* Sticky Expandable Filters */}
-      <div className="sticky top-20 z-20">
+      <div className="relative md:sticky md:top-20 z-20">
         <div 
           className={`transition-all duration-300 ${
             filtersExpanded ? 'shadow-sm bg-white border border-gray-200 rounded-b-lg' : 'bg-white border-b border-gray-200'

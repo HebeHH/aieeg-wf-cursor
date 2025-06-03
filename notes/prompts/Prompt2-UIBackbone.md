@@ -258,3 +258,17 @@ They include:
 * Reject button
 
 When a 'session' button is clicked on, both session and speaker full cards will be open at once. In this situation, session cards are on the left and speaker cards on the right.
+
+
+# Paying it forward
+
+Let's make sure it's easy for someone else to pickup and develop off of this. Create a new file `notes/interfaces/uiSessionsAndSpeakers.md`. Put here your notes from the UI build - all the components, contexts, utils, etc you used that are possibly going to be important to the next person.
+
+Some specific questions to make sure you answer:
+* where are all the session and speaker data stored? how is it accessible?
+* is this accessible from anywhere in the app, or how can you make sure it hooks in?
+* what's the difference between the full data and the active data?
+* how is this data structured?
+* what components are available and recommended for reuse? what data would people need to provide to use this?
+* what's up with the contexts?
+* what else would be helpful for the next dev to know?

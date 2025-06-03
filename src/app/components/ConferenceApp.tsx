@@ -13,6 +13,7 @@ type Tab = 'speakers' | 'sessions' | 'you' | 'calendar';
 
 export default function ConferenceApp() {
   const [activeTab, setActiveTab] = useState<Tab>('speakers');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { loading, error } = useConference();
 
   if (loading) {
@@ -62,7 +63,10 @@ export default function ConferenceApp() {
               </div>
             </div>
             <div className="md:hidden">
-              <button className="text-rose-50 focus:outline-none">
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-rose-50 focus:outline-none"
+              >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
                 </svg>
@@ -102,6 +106,53 @@ export default function ConferenceApp() {
               </button>
             </nav>
           </div>
+          
+          {/* Mobile Navigation Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden bg-violet-600 border-t border-violet-400">
+              <div className="px-4 py-3 space-y-2">
+                <button
+                  onClick={() => {
+                    setActiveTab('speakers');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-md font-medium rounded-lg transition-colors ${
+                    activeTab === 'speakers'
+                      ? 'bg-rose-200 text-violet-900'
+                      : 'text-rose-100 hover:text-rose-200 hover:bg-violet-500'
+                  }`}
+                >
+                  Speakers
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('sessions');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-md font-medium rounded-lg transition-colors ${
+                    activeTab === 'sessions'
+                      ? 'bg-rose-200 text-violet-900'
+                      : 'text-rose-100 hover:text-rose-200 hover:bg-violet-500'
+                  }`}
+                >
+                  Sessions
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('you');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-md font-medium rounded-lg transition-colors ${
+                    activeTab === 'you'
+                      ? 'bg-rose-200 text-violet-900'
+                      : 'text-rose-100 hover:text-rose-200 hover:bg-violet-500'
+                  }`}
+                >
+                  You
+                </button>
+              </div>
+            </div>
+          )}
         </header>
 
         {/* Main Content */}

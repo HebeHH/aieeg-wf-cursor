@@ -197,7 +197,7 @@ export default function CalendarTab() {
         
         // Calculate layout for overlapping events
         const totalEvents = allOverlapping.length;
-        const eventWidth = Math.max(200, (availableWidth * 0.8) / totalEvents); // Minimum 200px width
+        const eventWidth = Math.max(150, (availableWidth * 0.8) / totalEvents); // Reduced from 200px to 150px for mobile
         
         allOverlapping.forEach((item, position) => {
           const leftOffset = position * (eventWidth + 8); // 8px gap between events
@@ -412,7 +412,7 @@ export default function CalendarTab() {
       {/* Calendar View */}
       <div className="flex">
         {/* Timeline */}
-        <div className="w-20 flex-shrink-0">
+        <div className="w-20 flex-shrink-0 relative z-20 bg-white">
           {timeSlots.map(time => (
             <div key={time} className="h-[120px] border-b border-gray-200 text-sm text-gray-500 p-2 flex items-start">
               {time}
@@ -420,38 +420,57 @@ export default function CalendarTab() {
           ))}
         </div>
 
-        {/* Events */}
-        <div className="flex-1 relative border-l border-gray-200" style={{ minHeight: `${timeSlots.length * 120}px` }}>
-          {/* Hour grid lines */}
-          {timeSlots.map((_, index) => (
+        {/* Calendar Container */}
+        <div className="flex-1 relative overflow-hidden">
+          {/* Fixed Hour Grid Lines */}
+          <div 
+            className="absolute inset-0 border-l border-gray-200 pointer-events-none z-10"
+            style={{ minHeight: `${timeSlots.length * 120}px` }}
+          >
+            {timeSlots.map((_, index) => (
+              <div 
+                key={index} 
+                className="absolute w-full border-b border-gray-100" 
+                style={{ top: `${index * 120}px`, height: '120px' }}
+              />
+            ))}
+          </div>
+
+          {/* Scrollable Events Container */}
+          <div 
+            className="absolute inset-0 overflow-x-auto overflow-y-hidden z-20"
+            style={{ minHeight: `${timeSlots.length * 120}px` }}
+          >
             <div 
-              key={index} 
-              className="absolute w-full border-b border-gray-100" 
-              style={{ top: `${index * 120}px`, height: '120px' }}
-            />
-          ))}
-          
-          {/* Events */}
-          {calendarEvents.map(session => (
-            <div
-              key={session.id}
-              className="absolute"
-              style={{
-                top: `${session.topOffset}px`,
-                height: `${session.height}px`,
-                left: `${8 + session.leftOffset}px`, // 8px base margin + dynamic offset
-                width: `${session.width}px`,
-                maxWidth: 'calc(100% - 16px)', // Don't exceed container width
-                zIndex: 10
+              className="relative"
+              style={{ 
+                minHeight: `${timeSlots.length * 120}px`,
+                width: 'max-content',
+                minWidth: '100%'
               }}
             >
-              <CalendarEventCard
-                session={session}
-                onClick={() => openModal('session', session.id)}
-                onHide={() => handleHideSession(session.id)}
-              />
+              {/* Events */}
+              {calendarEvents.map(session => (
+                <div
+                  key={session.id}
+                  className="absolute"
+                  style={{
+                    top: `${session.topOffset}px`,
+                    height: `${session.height}px`,
+                    left: `${8 + session.leftOffset}px`, // 8px base margin + dynamic offset
+                    width: `${session.width}px`,
+                    zIndex: 10
+                  }}
+                >
+                  <CalendarEventCard
+                    session={session}
+                    onClick={() => openModal('session', session.id)}
+                    onHide={() => handleHideSession(session.id)}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </div>

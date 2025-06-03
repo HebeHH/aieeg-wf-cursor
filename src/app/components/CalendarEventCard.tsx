@@ -20,9 +20,9 @@ export default function CalendarEventCard({ session, onClick, onHide }: Calendar
 
   // Determine what content to show based on size - be more intelligent about space usage
   const hasGoodHeight = !session.height || session.height >= 60; // Enough height for multiple lines
-  const hasGoodWidth = !session.width || session.width >= 180; // Enough width for tags
+  const hasGoodWidth = !session.width || session.width >= 160; // Reduced from 180 for mobile
   const hasExcellentHeight = !session.height || session.height >= 90; // Plenty of height for all content
-  const hasExcellentWidth = !session.width || session.width >= 220; // Plenty of width for all content
+  const hasExcellentWidth = !session.width || session.width >= 200; // Reduced from 220 for mobile
   
   // Show content based on available space
   const showAllContent = hasExcellentHeight && hasExcellentWidth;

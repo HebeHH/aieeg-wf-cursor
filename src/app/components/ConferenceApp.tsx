@@ -42,7 +42,7 @@ export default function ConferenceApp() {
     <ModalProvider>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <header className="bg-violet-500 border-b border-rose-200 sticky top-0 z-10">
+        <header className="bg-violet-500 border-b border-rose-200 sticky top-0 z-30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 md:h-20">
             <div className="flex items-center space-x-4">
               <a href="https://www.shebecoding.com/" target="_blank" className="text-lg md:text-2xl font-bold text-rose-50">
@@ -146,6 +146,20 @@ export default function ConferenceApp() {
                 >
                   Sessions
                 </button>
+
+              <button
+                  onClick={() => {
+                    setActiveTab('calendar');
+                    setIsMobileMenuOpen(false);
+                  }}
+                 className={`block w-full text-left px-4 py-2 text-md font-medium rounded-lg transition-colors ${
+                  activeTab === 'calendar'
+                    ? 'bg-rose-200 text-violet-900'
+                    : 'text-rose-100 hover:text-rose-200 hover:bg-violet-600'
+                }`}
+              >
+                Calendar
+              </button>
                 <button
                   onClick={() => {
                     setActiveTab('you');

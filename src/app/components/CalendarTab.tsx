@@ -28,7 +28,7 @@ const initialFilters: CalendarFilters = {
   scope: [],
   day: '',
   room: '',
-  bookmarksOnly: false,
+  bookmarksOnly: true,
 };
 
 export default function CalendarTab() {
@@ -56,7 +56,7 @@ export default function CalendarTab() {
 
   // Filter sessions
   const filteredSessions = useMemo(() => {
-    return activeSessions.filter(session => {
+    const sessions = activeSessions.filter(session => {
       if (hiddenSessions.has(session.id)) return false;
 
       // Day filter
@@ -97,23 +97,37 @@ export default function CalendarTab() {
 
       return true;
     }).sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+
+    // Automatically display if 40 or fewer bookmarked sessions
+    if (filters.bookmarksOnly && sessions.length <= MAX_EVENTS) {
+      return sessions;
+    }
+
+    return sessions;
   }, [activeSessions, filters, hiddenSessions]);
 
-  // Group sessions by time slot for calendar view
+  // Define time slots for the calendar
+  const timeSlots = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+
+  // Update calendarEvents to group by time and stretch events
   const calendarEvents = useMemo(() => {
     const events = filteredSessions.slice(0, MAX_EVENTS);
     const timeSlots: { [key: string]: typeof events } = {};
 
     events.forEach(session => {
-      const { time } = formatSessionDate(session.startsAt, session.endsAt);
-      if (!timeSlots[time]) timeSlots[time] = [];
-      timeSlots[time].push(session);
+      const startHour = new Date(session.startsAt).getHours();
+      const endHour = new Date(session.endsAt).getHours();
+      for (let hour = startHour; hour <= endHour; hour++) {
+        const time = `${hour}:00`;
+        if (!timeSlots[time]) timeSlots[time] = [];
+        timeSlots[time].push(session);
+      }
     });
 
     return Object.entries(timeSlots).sort(([timeA], [timeB]) => {
-      const [startA] = timeA.split(' - ');
-      const [startB] = timeB.split(' - ');
-      return startA.localeCompare(startB);
+      const [hourA] = timeA.split(':');
+      const [hourB] = timeB.split(':');
+      return parseInt(hourA) - parseInt(hourB);
     });
   }, [filteredSessions]);
 
@@ -126,12 +140,15 @@ export default function CalendarTab() {
     setHiddenSessions(new Set());
   };
 
+  // Fix text color to ensure visibility
+  const textColor = "text-gray-800"; // Use a darker shade for better visibility
+
   return (
     <div className="space-y-6">
       {/* Filters Section */}
       <div className="sticky top-0 z-20 bg-white border border-gray-200 rounded-lg shadow-sm">
         <div 
-          className="flex items-center justify-between px-6 py-3 cursor-pointer"
+          className={`flex items-center justify-between px-6 py-3 cursor-pointer ${textColor}`}
           onClick={() => setFiltersExpanded(!filtersExpanded)}
         >
           <h3 className="text-lg font-medium text-gray-900">Calendar Configuration</h3>
@@ -289,39 +306,36 @@ export default function CalendarTab() {
       </div>
 
       {/* Calendar View */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {filters.day || 'All Days'} ({filteredSessions.length} events)
-          </h2>
+      <div className="flex">
+        {/* Timeline */}
+        <div className="w-16">
+          {timeSlots.map(time => (
+            <div key={time} className="h-16 border-b border-gray-200 text-xs text-gray-500">
+              {time}
+            </div>
+          ))}
+        </div>
 
-          {filteredSessions.length > MAX_EVENTS ? (
-            <div className="text-yellow-600 mb-4 p-4 bg-yellow-50 rounded-lg">
-              ⚠️ Too many events to display. Please use filters to show fewer than {MAX_EVENTS} events.
-            </div>
-          ) : filteredSessions.length === 0 ? (
-            <div className="text-gray-500 text-center py-8">
-              No events match your filters.
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {calendarEvents.map(([time, sessions]) => (
-                <div key={time} className="border-t border-gray-200 pt-4 first:border-t-0 first:pt-0">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{time}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {sessions.map(session => (
-                      <CalendarEventCard
-                        key={session.id}
-                        session={session}
-                        onClick={() => openModal('session', session.id)}
-                        onHide={() => handleHideSession(session.id)}
-                      />
-                    ))}
-                  </div>
+        {/* Events */}
+        <div className="flex-1">
+          {calendarEvents.map(([time, sessions]) => (
+            <div key={time} className="relative h-16 border-b border-gray-200">
+              {sessions.map(session => (
+                <div
+                  key={session.id}
+                  className="absolute bg-white border rounded-lg p-2 shadow-md"
+                  style={{
+                    top: 0,
+                    left: `${(new Date(session.startsAt).getMinutes() / 60) * 100}%`,
+                    width: `${((new Date(session.endsAt).getTime() - new Date(session.startsAt).getTime()) / (60 * 60 * 1000)) * 100}%`,
+                  }}
+                >
+                  <h3 className="text-sm font-medium text-gray-800">{session.title}</h3>
+                  <p className="text-xs text-gray-600">{session.Room}</p>
                 </div>
               ))}
             </div>
-          )}
+          ))}
         </div>
       </div>
     </div>

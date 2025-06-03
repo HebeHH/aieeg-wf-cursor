@@ -44,9 +44,10 @@ export default function ConferenceApp() {
         <header className="bg-violet-500 border-b border-rose-200 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 md:h-20">
             <div className="flex items-center space-x-4">
-              <a href="https://www.shebecoding.com/" target="_blank" className="text-xl md:text-3xl font-bold text-rose-50">
-                <span className="block md:inline">s<span className="font-bold text-rose-200">hebe</span>coding</span>
-                <span className="hidden md:inline">: AI WF Explorer</span>
+              <a href="https://www.shebecoding.com/" target="_blank" className="text-lg md:text-2xl font-bold text-rose-50">
+                <span className="block md:inline">WF Explorer</span>
+                <span className="hidden md:inline text-sm text-rose-100">by Hebe Hilhorst</span>
+                <span className="md:hidden text-sm text-rose-100">by Hebe</span>
               </a>
               <div className="flex space-x-2">
                 <a href="https://github.com/hebehh" target="_blank">

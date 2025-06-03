@@ -260,8 +260,8 @@ export default function SessionsTab() {
       // Title/Description search
       if (filters.titleDescriptionSearch) {
         const searchTerm = filters.titleDescriptionSearch.toLowerCase();
-        const titleMatch = session.title.toLowerCase().includes(searchTerm);
-        const descriptionMatch = session.description.toLowerCase().includes(searchTerm);
+        const titleMatch = session.title?.toLowerCase().includes(searchTerm) || false;
+        const descriptionMatch = session.description?.toLowerCase().includes(searchTerm) || false;
         if (!titleMatch && !descriptionMatch) {
           return false;
         }

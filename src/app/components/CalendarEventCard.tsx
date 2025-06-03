@@ -18,9 +18,16 @@ export default function CalendarEventCard({ session, onClick, onHide }: Calendar
 
   const sessionCompany = fullData ? getSessionCompany(session, fullData) : 'Unknown';
 
-  // Determine what content to show based on size
-  const isSmall = (session.height && session.height < 80) || (session.width && session.width < 250);
-  const isTiny = (session.height && session.height < 60) || (session.width && session.width < 200);
+  // Determine what content to show based on size - be more intelligent about space usage
+  const hasGoodHeight = !session.height || session.height >= 60; // Enough height for multiple lines
+  const hasGoodWidth = !session.width || session.width >= 180; // Enough width for tags
+  const hasExcellentHeight = !session.height || session.height >= 90; // Plenty of height for all content
+  const hasExcellentWidth = !session.width || session.width >= 220; // Plenty of width for all content
+  
+  // Show content based on available space
+  const showAllContent = hasExcellentHeight && hasExcellentWidth;
+  const showBasicContent = hasGoodHeight && hasGoodWidth;
+  const showOnlyTitle = !hasGoodHeight || !hasGoodWidth;
 
   const handleCalendarClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -61,7 +68,7 @@ export default function CalendarEventCard({ session, onClick, onHide }: Calendar
     >
       {/* Header with title and buttons */}
       <div className="flex items-start justify-between mb-1">
-        <h3 className="font-medium text-xs leading-tight flex-1 pr-1 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: isTiny ? 1 : 2, WebkitBoxOrient: 'vertical' }}>
+        <h3 className="font-medium text-xs leading-tight flex-1 pr-1 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: showOnlyTitle ? 1 : 2, WebkitBoxOrient: 'vertical' }}>
           {session.title}
         </h3>
         <div className="flex gap-0.5 flex-shrink-0">
@@ -100,20 +107,25 @@ export default function CalendarEventCard({ session, onClick, onHide }: Calendar
         </div>
       </div>
 
-      {/* Content - conditionally rendered based on size */}
-      {!isTiny && (
+      {/* Content - show based on actual available space */}
+      {!showOnlyTitle && (
         <div className="space-y-0.5 text-xs flex-1 overflow-hidden">
-          {!isSmall && (
+          {/* Show room if we have decent width */}
+          {hasGoodWidth && (
             <div className="flex items-center gap-1">
               <span className="bg-gray-100 px-1 py-0.5 rounded text-xs truncate">{session.Room}</span>
             </div>
           )}
-          {!isSmall && (
+          
+          {/* Show company if we have excellent space or at least good height with some width */}
+          {(showAllContent || (hasExcellentHeight && hasGoodWidth)) && (
             <div className="text-gray-600 truncate">
               <span className="font-medium">Company:</span> {sessionCompany}
             </div>
           )}
-          {session["Assigned Track"] && !isSmall && (
+          
+          {/* Show track if we have good space */}
+          {session["Assigned Track"] && showBasicContent && (
             <div>
               <span className={`inline-block px-1 py-0.5 rounded text-xs truncate ${getTrackColor(session["Assigned Track"])}`}>
                 {session["Assigned Track"]}

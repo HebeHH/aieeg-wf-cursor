@@ -36,7 +36,6 @@ export default function ModalManager() {
       {/* Modals are absolutely positioned on desktop, centered on mobile */}
       {modals.map(modal => {
         const commonProps = {
-          key: modal.id,
           modalId: modal.id,
           onClose: () => closeModal(modal.id),
           isMobile,
@@ -44,11 +43,13 @@ export default function ModalManager() {
 
         return modal.type === 'speaker' ? (
           <SpeakerModal
+            key={modal.id}
             {...commonProps}
             speakerId={modal.entityId}
           />
         ) : (
           <SessionModal
+            key={modal.id}
             {...commonProps}
             sessionId={modal.entityId}
           />

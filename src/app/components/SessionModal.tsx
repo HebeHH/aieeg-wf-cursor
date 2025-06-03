@@ -5,14 +5,16 @@ import { useModal } from '../contexts/ModalContext';
 import { getPositionColor, getTrackColor, getLevelColor, getScopeColor } from '../utils/positionColors';
 import { formatSessionDate } from '../utils/dateUtils';
 import { getSessionCompany } from '../utils/sessionUtils';
+import { generateGoogleCalendarUrl } from '../utils/calendarUtils';
 
 interface SessionModalProps {
   modalId: string;
   sessionId: string | null;
   onClose: () => void;
+  isMobile: boolean;
 }
 
-export default function SessionModal({ modalId, sessionId, onClose }: SessionModalProps) {
+export default function SessionModal({ modalId, sessionId, onClose, isMobile }: SessionModalProps) {
   const { fullData, bookmarkData, toggleSessionBookmark, rejectSession } = useConference();
   const { openModal, getModalPosition } = useModal();
 
@@ -22,7 +24,7 @@ export default function SessionModal({ modalId, sessionId, onClose }: SessionMod
   if (!session) return null;
 
   const isBookmarked = bookmarkData.sessionBookmarks.includes(sessionId);
-  const position = getModalPosition(modalId);
+  const position = !isMobile ? getModalPosition(modalId) : null;
   const { day, time } = formatSessionDate(session.startsAt, session.endsAt);
   const sessionCompany = getSessionCompany(session, fullData);
   const companyDomains = session["Company Domains"] ? session["Company Domains"].split(',').map(d => d.trim()) : [];
@@ -31,6 +33,10 @@ export default function SessionModal({ modalId, sessionId, onClose }: SessionMod
   const sessionSpeakers = session.speakers.map(speakerId => 
     fullData.speakers.find(s => s.id === speakerId)
   ).filter(Boolean);
+
+  const handleCalendarClick = () => {
+    window.open(generateGoogleCalendarUrl(session), '_blank');
+  };
 
   const modalStyle = position 
     ? {
@@ -41,10 +47,9 @@ export default function SessionModal({ modalId, sessionId, onClose }: SessionMod
         zIndex: 60,
       }
     : {
-        position: 'absolute' as const,
-        left: '50px',
-        right: '50px',
-        top: '50px',
+        position: 'relative' as const,
+        maxWidth: '90vw',
+        margin: '20px auto',
         zIndex: 60,
       };
 
@@ -182,6 +187,12 @@ export default function SessionModal({ modalId, sessionId, onClose }: SessionMod
             className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             Reject
+          </button>
+          <button
+            onClick={handleCalendarClick}
+            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            Add to Calendar
           </button>
         </div>
       </div>

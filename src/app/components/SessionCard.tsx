@@ -4,6 +4,7 @@ import { EnhancedSessionWithBookmarks } from '../types/ui';
 import { getPositionColor, getTrackColor, getLevelColor, getScopeColor } from '../utils/positionColors';
 import { formatSessionDate } from '../utils/dateUtils';
 import { getSessionCompany } from '../utils/sessionUtils';
+import { generateGoogleCalendarUrl } from '../utils/calendarUtils';
 import { useConference } from '../contexts/ConferenceContext';
 
 interface SessionCardProps {
@@ -16,6 +17,11 @@ export default function SessionCard({ session, onClick }: SessionCardProps) {
 
   const { day, time } = formatSessionDate(session.startsAt, session.endsAt);
   const sessionCompany = fullData ? getSessionCompany(session, fullData) : 'Unknown';
+
+  const handleCalendarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(generateGoogleCalendarUrl(session), '_blank');
+  };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer">
@@ -85,6 +91,13 @@ export default function SessionCard({ session, onClick }: SessionCardProps) {
         </div>
         
         <div className="flex gap-2 ml-2">
+          <button
+            onClick={handleCalendarClick}
+            className="px-2 py-1 text-xs rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+            title="Add to Calendar"
+          >
+            📅
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();

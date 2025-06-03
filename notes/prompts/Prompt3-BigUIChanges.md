@@ -71,3 +71,8 @@ Otherwise:
 - these are the colors to put in the legend
 
 Clicking on any of the calendar events opens the normal SessionModal (which should also have add to cal button)
+
+
+## Pass it forward
+
+Create a new doc in `interfaces` and add in anything that would be useful for the next dev to know - like 'uiSessionsAndSpeakers' and 'fullData.md' did for you.

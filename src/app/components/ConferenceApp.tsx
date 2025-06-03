@@ -6,9 +6,10 @@ import { ModalProvider } from '../contexts/ModalContext';
 import SpeakersTab from './SpeakersTab';
 import SessionsTab from './SessionsTab';
 import YouTab from './YouTab';
+import CalendarTab from './CalendarTab';
 import ModalManager from './ModalManager';
 
-type Tab = 'speakers' | 'sessions' | 'you';
+type Tab = 'speakers' | 'sessions' | 'you' | 'calendar';
 
 export default function ConferenceApp() {
   const [activeTab, setActiveTab] = useState<Tab>('speakers');
@@ -46,7 +47,7 @@ export default function ConferenceApp() {
               <h1 className="text-2xl font-bold text-gray-900">Conference Explorer</h1>
               
               {/* Tab Navigation */}
-              <nav className="flex space-x-8">
+              <nav className="flex space-x-4 md:space-x-8">
                 <button
                   onClick={() => setActiveTab('speakers')}
                   className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
@@ -68,6 +69,16 @@ export default function ConferenceApp() {
                   Sessions
                 </button>
                 <button
+                  onClick={() => setActiveTab('calendar')}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeTab === 'calendar'
+                      ? 'bg-purple-100 text-purple-700'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Calendar
+                </button>
+                <button
                   onClick={() => setActiveTab('you')}
                   className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     activeTab === 'you'
@@ -86,6 +97,7 @@ export default function ConferenceApp() {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {activeTab === 'speakers' && <SpeakersTab />}
           {activeTab === 'sessions' && <SessionsTab />}
+          {activeTab === 'calendar' && <CalendarTab />}
           {activeTab === 'you' && <YouTab />}
         </main>
 

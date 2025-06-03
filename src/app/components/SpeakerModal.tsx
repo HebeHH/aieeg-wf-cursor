@@ -10,9 +10,10 @@ interface SpeakerModalProps {
   modalId: string;
   speakerId: string | null;
   onClose: () => void;
+  isMobile: boolean;
 }
 
-export default function SpeakerModal({ modalId, speakerId, onClose }: SpeakerModalProps) {
+export default function SpeakerModal({ modalId, speakerId, onClose, isMobile }: SpeakerModalProps) {
   const { fullData, bookmarkData, toggleSpeakerBookmark, rejectSpeaker } = useConference();
   const { openModal, getModalPosition } = useModal();
 
@@ -22,7 +23,7 @@ export default function SpeakerModal({ modalId, speakerId, onClose }: SpeakerMod
   if (!speaker) return null;
 
   const isBookmarked = bookmarkData.speakerBookmarks.includes(speakerId);
-  const position = getModalPosition(modalId);
+  const position = !isMobile ? getModalPosition(modalId) : null;
 
   // Get speaker's sessions
   const speakerSessions = fullData.sessions.filter(session => 
@@ -38,10 +39,9 @@ export default function SpeakerModal({ modalId, speakerId, onClose }: SpeakerMod
         zIndex: 60,
       }
     : {
-        position: 'absolute' as const,
-        left: '50px',
-        right: '50px',
-        top: '50px',
+        position: 'relative' as const,
+        maxWidth: '90vw',
+        margin: '20px auto',
         zIndex: 60,
       };
 

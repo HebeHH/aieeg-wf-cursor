@@ -108,23 +108,88 @@ export default function CalendarTab() {
 
   // Adjust timeSlots to start from the earliest event time
   const timeSlots = useMemo(() => {
+    if (filteredSessions.length === 0) {
+      return ['9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+    }
     const startHour = Math.min(...filteredSessions.map(s => new Date(s.startsAt).getHours()));
     const endHour = Math.max(...filteredSessions.map(s => new Date(s.endsAt).getHours()));
     return Array.from({ length: endHour - startHour + 1 }, (_, i) => `${startHour + i}:00`);
   }, [filteredSessions]);
 
-  // Update calendarEvents to group by time and stretch events vertically
+  // Update calendarEvents to calculate positions properly with overlap detection
   const calendarEvents = useMemo(() => {
     const events = filteredSessions.slice(0, MAX_EVENTS);
-    return events.map(session => {
-      const startHour = new Date(session.startsAt).getHours();
-      const endHour = new Date(session.endsAt).getHours();
+    if (events.length === 0) {
+      return [];
+    }
+    const startHour = Math.min(...events.map(s => new Date(s.startsAt).getHours()));
+    
+    // Available width for events (accounting for margins)
+    const availableWidth = 800; // Estimate based on typical calendar width
+    
+    // First, calculate basic positioning for all events
+    const eventsWithPosition = events.map(session => {
+      const sessionStartHour = new Date(session.startsAt).getHours();
+      const sessionStartMinute = new Date(session.startsAt).getMinutes();
+      const sessionEndHour = new Date(session.endsAt).getHours();
+      const sessionEndMinute = new Date(session.endsAt).getMinutes();
+      
+      // Calculate position relative to calendar start
+      const topOffset = (sessionStartHour - startHour) * 120 + (sessionStartMinute / 60) * 120; // 120px per hour
+      const durationMinutes = ((sessionEndHour * 60 + sessionEndMinute) - (sessionStartHour * 60 + sessionStartMinute));
+      const height = (durationMinutes / 60) * 120; // Convert minutes to pixels
+      
       return {
         ...session,
-        top: `${(startHour - startHour) * 100}%`,
-        height: `${(endHour - startHour) * 100}%`
+        topOffset,
+        height: Math.max(height, 40), // Minimum height of 40px for very short events
+        startTime: sessionStartHour * 60 + sessionStartMinute,
+        endTime: sessionEndHour * 60 + sessionEndMinute,
+        leftOffset: 0,
+        width: availableWidth * 0.8 // Default to 80% of available width
       };
     });
+
+    // Detect overlaps and calculate staggered positions
+    const processedEvents = [...eventsWithPosition];
+    
+    for (let i = 0; i < processedEvents.length; i++) {
+      const currentEvent = processedEvents[i];
+      const overlappingEvents = [];
+      
+      // Find all events that overlap with current event
+      for (let j = 0; j < processedEvents.length; j++) {
+        const otherEvent = processedEvents[j];
+        if (i !== j && 
+            currentEvent.startTime < otherEvent.endTime && 
+            currentEvent.endTime > otherEvent.startTime) {
+          overlappingEvents.push({ event: otherEvent, index: j });
+        }
+      }
+      
+      if (overlappingEvents.length > 0) {
+        // Include current event in the overlapping group
+        const allOverlapping = [{ event: currentEvent, index: i }, ...overlappingEvents];
+        
+        // Sort by start time to maintain consistent ordering
+        allOverlapping.sort((a, b) => a.event.startTime - b.event.startTime);
+        
+        // Calculate layout for overlapping events
+        const totalEvents = allOverlapping.length;
+        const eventWidth = Math.max(200, (availableWidth * 0.8) / totalEvents); // Minimum 200px width
+        
+        allOverlapping.forEach((item, position) => {
+          const leftOffset = position * (eventWidth + 8); // 8px gap between events
+          processedEvents[item.index] = {
+            ...item.event,
+            leftOffset,
+            width: eventWidth
+          };
+        });
+      }
+    }
+    
+    return processedEvents;
   }, [filteredSessions]);
 
   const handleHideSession = (sessionId: string) => {
@@ -304,36 +369,44 @@ export default function CalendarTab() {
       {/* Calendar View */}
       <div className="flex">
         {/* Timeline */}
-        <div className="w-16">
+        <div className="w-20 flex-shrink-0">
           {timeSlots.map(time => (
-            <div key={time} className="h-16 border-b border-gray-200 text-xs text-gray-500">
+            <div key={time} className="h-[120px] border-b border-gray-200 text-sm text-gray-500 p-2 flex items-start">
               {time}
             </div>
           ))}
         </div>
 
         {/* Events */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative border-l border-gray-200" style={{ minHeight: `${timeSlots.length * 120}px` }}>
+          {/* Hour grid lines */}
+          {timeSlots.map((_, index) => (
+            <div 
+              key={index} 
+              className="absolute w-full border-b border-gray-100" 
+              style={{ top: `${index * 120}px`, height: '120px' }}
+            />
+          ))}
+          
+          {/* Events */}
           {calendarEvents.map(session => (
             <div
               key={session.id}
-              className="absolute bg-white border rounded-lg p-2 shadow-md"
+              className="absolute"
               style={{
-                top: session.top,
-                height: session.height,
-                left: `${(new Date(session.startsAt).getMinutes() / 60) * 100}%`,
-                width: `${((new Date(session.endsAt).getTime() - new Date(session.startsAt).getTime()) / (60 * 60 * 1000)) * 100}%`,
+                top: `${session.topOffset}px`,
+                height: `${session.height}px`,
+                left: `${8 + session.leftOffset}px`, // 8px base margin + dynamic offset
+                width: `${session.width}px`,
+                maxWidth: 'calc(100% - 16px)', // Don't exceed container width
+                zIndex: 10
               }}
-              onClick={() => openModal('session', session.id)}
             >
-              <h3 className="text-sm font-medium text-gray-800">{session.title}</h3>
-              <p className="text-xs text-gray-600">{session.Room}</p>
-              <div className="flex gap-1 mt-2">
-                <button className="p-1 text-xs rounded bg-purple-100 text-purple-700 hover:bg-purple-200">★</button>
-                <button className="p-1 text-xs rounded bg-red-100 text-red-700 hover:bg-red-200">✕</button>
-                <button className="p-1 text-xs rounded bg-green-100 text-green-700 hover:bg-green-200">📅</button>
-                <button className="p-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200">👁️</button>
-              </div>
+              <CalendarEventCard
+                session={session}
+                onClick={() => openModal('session', session.id)}
+                onHide={() => handleHideSession(session.id)}
+              />
             </div>
           ))}
         </div>

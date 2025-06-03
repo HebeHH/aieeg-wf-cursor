@@ -89,16 +89,7 @@ export default function ConferenceApp() {
               >
                 Sessions
               </button>
-              <button
-                onClick={() => setActiveTab('calendar')}
-                className={`px-4 py-2 text-md font-medium rounded-lg shadow-md transition-colors ${
-                  activeTab === 'calendar'
-                    ? 'bg-rose-200 text-violet-900'
-                    : 'text-rose-100 hover:text-rose-200 hover:bg-violet-600'
-                }`}
-              >
-                Calendar
-              </button>
+              
               <button
                 onClick={() => setActiveTab('you')}
                 className={`px-4 py-2 text-md font-medium rounded-lg shadow-md transition-colors ${

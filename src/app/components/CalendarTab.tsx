@@ -8,6 +8,9 @@ import CalendarEventCard from './CalendarEventCard';
 import { getLevelColor, getScopeColor } from '../utils/positionColors';
 
 const MAX_EVENTS = 100;
+// Configurable parameter: pixels per minute (5px = 300px per hour)
+const PIXELS_PER_MINUTE = 5;
+const PIXELS_PER_HOUR = PIXELS_PER_MINUTE * 60;
 
 interface CalendarFilters {
   speakerPosition: Position[];
@@ -145,8 +148,8 @@ export default function CalendarTab() {
     }
     const startHour = Math.min(...events.map(s => new Date(s.startsAt).getHours()));
     
-    // Available width for events (accounting for margins)
-    const availableWidth = 800; // Estimate based on typical calendar width
+    // Available width for events (full screen width)
+    const availableWidth = window?.innerWidth ? window.innerWidth - 100 : 1200; // Account for timeline column
     
     // First, calculate basic positioning for all events
     const eventsWithPosition = events.map(session => {
@@ -155,10 +158,10 @@ export default function CalendarTab() {
       const sessionEndHour = new Date(session.endsAt).getHours();
       const sessionEndMinute = new Date(session.endsAt).getMinutes();
       
-      // Calculate position relative to calendar start
-      const topOffset = (sessionStartHour - startHour) * 120 + (sessionStartMinute / 60) * 120; // 120px per hour
+      // Calculate position relative to calendar start using configurable scaling
+      const topOffset = (sessionStartHour - startHour) * PIXELS_PER_HOUR + sessionStartMinute * PIXELS_PER_MINUTE;
       const durationMinutes = ((sessionEndHour * 60 + sessionEndMinute) - (sessionStartHour * 60 + sessionStartMinute));
-      const height = (durationMinutes / 60) * 120; // Convert minutes to pixels
+      const height = durationMinutes * PIXELS_PER_MINUTE; // Convert minutes to pixels using configurable parameter
       
       return {
         ...session,
@@ -226,7 +229,7 @@ export default function CalendarTab() {
   const textColor = "text-gray-800"; // Use a darker shade for better visibility
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-h-screen space-y-6">
 
       {/* Filters Section */}
       <div className="relative md:sticky md:top-20 z-20 bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -387,44 +390,43 @@ export default function CalendarTab() {
         )}
       </div>
 
-      {/* Calendar View */}
-      <div className="flex">
+      {/* Calendar View - Full Screen */}
+      <div className="flex w-full min-h-screen">
         {/* Timeline */}
         <div className="w-12 md:w-20 flex-shrink-0 relative z-0 bg-white">
           {timeSlots.map(time => (
-            <div key={time} className="h-[120px] border-b border-gray-200 text-sm text-gray-500 p-1 md:p-2 flex items-start">
+            <div key={time} style={{ height: `${PIXELS_PER_HOUR}px` }} className="border-b border-gray-200 text-sm text-gray-500 p-1 md:p-2 flex items-start">
               <span className="text-xs md:text-sm">{time}</span>
             </div>
           ))}
         </div>
 
-        {/* Calendar Container */}
-        <div className="flex-1 relative overflow-hidden">
+        {/* Calendar Container - Full Width */}
+        <div className="flex-1 relative overflow-hidden w-full">
           {/* Fixed Hour Grid Lines */}
           <div 
-            className="absolute inset-0 border-l border-gray-200 pointer-events-none z-0"
-            style={{ minHeight: `${timeSlots.length * 120}px` }}
+            className="absolute inset-0 border-l border-gray-200 pointer-events-none z-0 w-full"
+            style={{ minHeight: `${timeSlots.length * PIXELS_PER_HOUR}px` }}
           >
             {timeSlots.map((_, index) => (
               <div 
                 key={index} 
                 className="absolute w-full border-b border-gray-100" 
-                style={{ top: `${index * 120}px`, height: '120px' }}
+                style={{ top: `${index * PIXELS_PER_HOUR}px`, height: `${PIXELS_PER_HOUR}px` }}
               />
             ))}
           </div>
 
-          {/* Scrollable Events Container */}
+          {/* Scrollable Events Container - Full Width */}
           <div 
-            className="absolute inset-0 overflow-x-auto overflow-y-hidden z-1"
-            style={{ minHeight: `${timeSlots.length * 120}px` }}
+            className="absolute inset-0 overflow-x-auto overflow-y-hidden z-1 w-full"
+            style={{ minHeight: `${timeSlots.length * PIXELS_PER_HOUR}px` }}
           >
             <div 
-              className="relative"
+              className="relative w-full"
               style={{ 
-                minHeight: `${timeSlots.length * 120}px`,
-                width: 'max-content',
-                minWidth: '100%'
+                minHeight: `${timeSlots.length * PIXELS_PER_HOUR}px`,
+                width: '100%'
               }}
             >
               {/* Events */}

@@ -7,7 +7,7 @@ import MultiSelect from './MultiSelect';
 import CalendarEventCard from './CalendarEventCard';
 import { getLevelColor, getScopeColor } from '../utils/positionColors';
 
-const MAX_EVENTS = 40;
+const MAX_EVENTS = 100;
 
 interface CalendarFilters {
   speakerPosition: Position[];
